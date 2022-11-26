@@ -15,6 +15,22 @@ async function findByEmail(email: string, select?: Prisma.UserSelect) {
   return prisma.user.findUnique(params);
 }
 
+async function findUserWithTicketTypeByUserId(userId: number) {
+  return prisma.user.findFirst({
+    include: {
+      Enrollment: {
+        include: {
+          Ticket: {
+            include: {
+              TicketType: true
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
 async function create(data: Prisma.UserUncheckedCreateInput) {
   return prisma.user.create({
     data,
@@ -23,6 +39,7 @@ async function create(data: Prisma.UserUncheckedCreateInput) {
 
 const userRepository = {
   findByEmail,
+  findUserWithTicketTypeByUserId,
   create,
 };
 
