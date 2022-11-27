@@ -1,5 +1,4 @@
 import app, { init } from "@/app";
-import { prisma } from "@/config";
 import faker from "@faker-js/faker";
 import { TicketStatus } from "@prisma/client";
 import httpStatus from "http-status";
@@ -8,7 +7,6 @@ import supertest from "supertest";
 import {
   createEnrollmentWithAddress,
   createUser,
-  createTicketType,
   createRemoteTicketType,
   createHostableTicketType,
   createTicket,
@@ -150,7 +148,7 @@ describe("GET /hotels/:hotelId", () => {
   const invalidHotelId = faker.lorem.word();
 
   it("should respond with status 401 if no token is given", async () => {
-    const response = await server.get(`hotels/${validHotelId}`);
+    const response = await server.get(`/hotels/${validHotelId}`);
 
     expect(response.status).toBe(httpStatus.UNAUTHORIZED);
   });
@@ -158,7 +156,7 @@ describe("GET /hotels/:hotelId", () => {
   it("should respond with status 401 if given token is not valid", async () => {
     const token = faker.lorem.word();
 
-    const response = await server.get(`hotels/${validHotelId}`).set("Authorization", `Bearer ${token}`);
+    const response = await server.get(`/hotels/${validHotelId}`).set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(httpStatus.UNAUTHORIZED);
   });
@@ -167,7 +165,7 @@ describe("GET /hotels/:hotelId", () => {
     const userWithoutSession = await createUser();
     const token = jwt.sign({ userId: userWithoutSession.id }, process.env.JWT_SECRET);
 
-    const response = await server.get(`hotels/${validHotelId}`).set("Authorization", `Bearer ${token}`);
+    const response = await server.get(`/hotels/${validHotelId}`).set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(httpStatus.UNAUTHORIZED);
   });
@@ -176,7 +174,7 @@ describe("GET /hotels/:hotelId", () => {
     it("should respond with status 400 if hotelId format is not valid", async () => {
       const token = await generateValidToken();
 
-      const response = await server.get(`hotels/${invalidHotelId}`).set("Authorization", `Bearer ${token}`);
+      const response = await server.get(`/hotels/${invalidHotelId}`).set("Authorization", `Bearer ${token}`);
 
       expect(response.status).toBe(httpStatus.BAD_REQUEST);
     });
@@ -184,9 +182,9 @@ describe("GET /hotels/:hotelId", () => {
     describe("when hotelId format is valid", () => {
       it("should respond with status 403 when user doesnt have an enrollment yet", async () => {
         const token = await generateValidToken();
-
+  
         const response = await server.get(`/hotels/${validHotelId}`).set("Authorization", `Bearer ${token}`);
-
+  
         expect(response.status).toBe(httpStatus.FORBIDDEN);
       });
 
@@ -256,7 +254,7 @@ describe("GET /hotels/:hotelId", () => {
           const ticketType = await createHostableTicketType();
           await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
           const hotel = await createHotel();
-          const inexistentHotelId = hotel.id +1;
+          const inexistentHotelId = hotel.id + 1;
 
           const response = await server.get(`/hotels/${inexistentHotelId}`).set("Authorization", `Bearer ${token}`);
 
@@ -274,14 +272,14 @@ describe("GET /hotels/:hotelId", () => {
 
             const response = await server.get(`/hotels/${hotel.id}`).set("Authorization", `Bearer ${token}`);
   
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(httpStatus.OK);
             expect(response.body).toEqual({
               id: hotel.id,
               name: hotel.name,
               image: hotel.image,
               createdAt: hotel.createdAt.toISOString(),
               updatedAt: hotel.updatedAt.toISOString(),
-              Rooms: [2],
+              Rooms: [],
             });
           });
   
@@ -295,7 +293,7 @@ describe("GET /hotels/:hotelId", () => {
 
             const response = await server.get(`/hotels/${hotelWithRoom.id}`).set("Authorization", `Bearer ${token}`);
   
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(httpStatus.OK);
             expect(response.body).toEqual({
               id: hotelWithRoom.id,
               name: hotelWithRoom.name,
