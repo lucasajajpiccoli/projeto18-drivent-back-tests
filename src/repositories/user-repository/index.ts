@@ -17,6 +17,9 @@ async function findByEmail(email: string, select?: Prisma.UserSelect) {
 
 async function findUserWithTicketTypeByUserId(userId: number) {
   return prisma.user.findFirst({
+    where: {
+      id: userId
+    },
     include: {
       Enrollment: {
         include: {
